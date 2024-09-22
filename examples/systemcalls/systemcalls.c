@@ -63,14 +63,13 @@ bool do_exec(int count, ...)
  *
 */
     if (command[0][0] != '/') {
+        // not an absolute path
         va_end(args);
         return false;
     }
-    fflush(stdout);
     pid_t pid = fork();
-    int status;
     if (pid == -1) {
-        // failure
+        // fork failure
         perror("fork");
         va_end(args);
         return false;
@@ -79,12 +78,15 @@ bool do_exec(int count, ...)
         execv(command[0], command);
         // execv only returns if there is an error
         perror("execv");
-        exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);  
     } else {
         // parent
+        int status;
         waitpid(pid, &status, 0); // wait for the child
-        if (WIFEXITED(status)) {  // returns true if the child terminated normally
-            return WEXITSTATUS(status) == 0;
+        // child exited with status 0 (success)
+        if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+            va_end(args);
+            return true;
         }
         va_end(args);
         return false;
@@ -120,35 +122,37 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *
 */
     int kidpid;
-    int status;
     int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
     if (fd < 0) { perror("open"); abort(); }
-    fflush(stdout);
     kidpid = fork();
     switch (kidpid) {
         case -1:
-            // failure
-            perror("fork"); 
+            // fork failure
+            perror("fork");
             va_end(args);
-            abort();
+            return false;
         case 0:
             // child
             if (dup2(fd, 1) < 0) {
-                perror("dup2");
+                perror("dup2"); 
+                return false;
                 abort();
             }
             close(fd);
-            execvp(command[0], command);
-            perror("execvp");
-            abort();
+            execv(command[0], command); 
+            perror("execvp"); 
+            return false;
         default:
             close(fd);
-            /* do whatever the parent wants to do. */
+            // parent
+            int status;
             waitpid(kidpid, &status, 0); // wait for the child
-            if (WIFEXITED(status)) {  // returns true if the child terminated normally
-                return WEXITSTATUS(status) == 0;
+            // child exited with status 0 (success)
+            if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+                va_end(args);
+                return true;
             }
             va_end(args);
             return false;
-    }
+        }
 }
