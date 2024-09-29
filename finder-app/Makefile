@@ -1,12 +1,14 @@
 CC=gcc
-CFLAGS= -02 -Wall
+CFLAGS= -O2 -Wall
 
 ifdef CROSS_COMPILE
 	CC = $(CROSS_COMPILE)gcc
 endif
 
+all: writer
+
 writer:
-	$(CC) -Wall writer.c -o writer
+	$(CC) $(CFLAGS) writer.c -o writer
 
 .PHONY: clean
 clean:
