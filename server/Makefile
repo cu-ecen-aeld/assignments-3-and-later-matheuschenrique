@@ -1,9 +1,9 @@
 CC=gcc
 CFLAGS= -O2 -Wall -Werror
 
-# ifdef CROSS_COMPILE
-# 	CC = $(CROSS_COMPILE)gcc
-# endif
+ifdef CROSS_COMPILE
+	CC = $(CROSS_COMPILE)gcc
+endif
 
 all: clean aesdsocket
 default: aesdsocket
