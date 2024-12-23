@@ -135,7 +135,6 @@ void* threadCallback(void *arg) {
     char client_ip[INET_ADDRSTRLEN] = "";
     FILE *pFile;
     int bytes_received = 0;
-    int receive_status = 0;
     int bytes_sent;
 
     // get the ip address from the client
@@ -213,7 +212,6 @@ int main(int argc, char *argv[]) {
     struct addrinfo hints, *res;
     struct sockaddr_in their_addr;
     socklen_t addr_size;
-    int current_size = 0;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_PASSIVE;
@@ -256,7 +254,6 @@ int main(int argc, char *argv[]) {
 
     addr_size = sizeof(their_addr);
     while(1) {
-        current_size = 0;
         new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size);
 
         if (new_fd == -1) {
