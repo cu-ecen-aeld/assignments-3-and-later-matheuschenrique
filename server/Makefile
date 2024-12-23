@@ -4,11 +4,11 @@ LDFLAGS ?= -lpthread -lrt
 TARGET ?= aesdsocket
 SRC ?= aesdsocket.c
 
-all: clean $(TARGET)
+all: $(TARGET)
 default: $(TARGET)
 
-aesdsocket:
-	$(CC) $(CCFLAGS) $(SRC) -o $@ $(LDFLAGS)
+$(TARGET): $(SRC)
+	$(CC) $(CFLAGS) $(SRC) -o $@ $(LDFLAGS)
 
 .PHONY: clean
 clean:
