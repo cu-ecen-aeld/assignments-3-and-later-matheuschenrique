@@ -19,12 +19,12 @@
 #define BACKLOG 10
 #define MAX_DATA_SIZE 100
 #define MIN_ALLOC_SIZE 100
-#define FILE_PATH "/var/tmp/aesdsocketdata"
+#define FILE_PATH "/dev/aesdchar"
 
 bool caught_signal = false;
 int sockfd;
 int new_fd;
-pthread_t timestamp_thread;
+// pthread_t timestamp_thread;
 
 pthread_mutex_t lock;
 
@@ -45,7 +45,7 @@ static void signal_handler(int number) {
     int errno_saved = errno;
     if (number == SIGINT || number == SIGTERM) {
         syslog(LOG_DEBUG, "Caught signal, exiting");
-        remove(FILE_PATH);
+        // remove(FILE_PATH);
         if (sockfd > 0) {
             close(sockfd);
         }
@@ -92,41 +92,41 @@ void signal_config() {
     }
 }
 
-void* putTimestampCallback(void *arg) {
-    FILE *pFile;
+// void* putTimestampCallback(void *arg) {
+//     FILE *pFile;
 
-    while(1) {
-        char time_str[200];
-        time_t t = time(NULL);
-        struct tm *tmp = localtime(&t);
-        if (tmp == NULL) {
-            perror("localtime");
-            exit(EXIT_FAILURE);
-        }
+//     while(1) {
+//         char time_str[200];
+//         time_t t = time(NULL);
+//         struct tm *tmp = localtime(&t);
+//         if (tmp == NULL) {
+//             perror("localtime");
+//             exit(EXIT_FAILURE);
+//         }
 
-        //RFC 2822-compliant date format
-        if (strftime(time_str, sizeof(time_str), "%a, %d %b %Y %T %z", tmp) == 0) {
-            perror("strftime");
-            exit(EXIT_FAILURE);
-        }
-        pthread_mutex_lock(&lock);
+//         //RFC 2822-compliant date format
+//         if (strftime(time_str, sizeof(time_str), "%a, %d %b %Y %T %z", tmp) == 0) {
+//             perror("strftime");
+//             exit(EXIT_FAILURE);
+//         }
+//         pthread_mutex_lock(&lock);
 
-        pFile = fopen(FILE_PATH, "a");
-        if (pFile == NULL) {
-            perror("fopen");
-            exit(EXIT_FAILURE);
-        }
+//         pFile = fopen(FILE_PATH, "a");
+//         if (pFile == NULL) {
+//             perror("fopen");
+//             exit(EXIT_FAILURE);
+//         }
 
-        printf("timestamp: %s\n", time_str);
-        fprintf(pFile, "timestamp: %s\n", time_str);
-        fflush(pFile);
-        fclose(pFile);
+//         printf("timestamp: %s\n", time_str);
+//         fprintf(pFile, "timestamp: %s\n", time_str);
+//         fflush(pFile);
+//         fclose(pFile);
 
-        pthread_mutex_unlock(&lock);
-        sleep(10);
+//         pthread_mutex_unlock(&lock);
+//         sleep(10);
 
-    }
-}
+//     }
+// }
 
 void* threadCallback(void *arg) {
     slist_data_t *data = (slist_data_t *)arg;
@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
         fork_config();
     }
 
-    pthread_create(&timestamp_thread, NULL, putTimestampCallback, NULL);
+    // pthread_create(&timestamp_thread, NULL, putTimestampCallback, NULL);
 
     if (listen(sockfd, BACKLOG)!= 0) {
         perror("listen");
