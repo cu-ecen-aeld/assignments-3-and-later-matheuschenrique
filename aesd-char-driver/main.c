@@ -62,13 +62,17 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
     size_t offset_rtn = 0;
     struct aesd_dev *dev = filp->private_data;
 
+    if (mutex_lock_interruptible(&dev->lock)) {
+        return -ERESTARTSYS;
+    }
+
     struct aesd_buffer_entry *entry = aesd_circular_buffer_find_entry_offset_for_fpos(&dev->buffer, offset, &offset_rtn);
+    mutex_unlock(&dev->lock);
     if (!entry) {
         retval = 0;
         goto out;
     }
-
-    PDEBUG("offset_rtn: %zu", offset_rtn);
+    
 
     if (entry->size - offset_rtn < count) {
         retval = entry->size - offset_rtn;
@@ -100,6 +104,10 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
     char *kbuf = kmalloc(count, GFP_KERNEL);
     if (!kbuf) {
         kfree(kbuf);
+        goto out;
+    }
+    if (mutex_lock_interruptible(&dev->lock)) {
+        retval = -ERESTARTSYS;
         goto out;
     }
 
@@ -141,6 +149,8 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 
     *f_pos += count;
     retval = count;
+
+    mutex_unlock(&dev->lock);
 
 out:
     // kfree(kbuf);
@@ -187,7 +197,7 @@ int aesd_init_module(void)
      * TODO: initialize the AESD specific portion of the device
      */
     aesd_circular_buffer_init(&aesd_device.buffer);
-    // mutex_init(&aesd_device.lock);
+    mutex_init(&aesd_device.lock);
 
     result = aesd_setup_cdev(&aesd_device);
 
