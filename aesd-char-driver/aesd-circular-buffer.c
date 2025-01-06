@@ -60,6 +60,11 @@ const char *aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, 
 {
     const char *replaced_entry = NULL;
 
+    // Check for null pointers
+    if (!buffer || !add_entry) {
+        return NULL;
+    }
+
     if (buffer->full) {
         replaced_entry = buffer->entry[buffer->out_offs].buffptr;
         buffer->out_offs++;
@@ -80,7 +85,7 @@ const char *aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, 
     } else {
         buffer->full = false;
     }
-    
+
     return replaced_entry;
 }
 
