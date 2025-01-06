@@ -186,11 +186,6 @@ int aesd_init_module(void)
     /**
      * TODO: initialize the AESD specific portion of the device
      */
-    // aesd_device = kmalloc(sizeof(struct aesd_dev), GFP_KERNEL);
-    // if (!aesd_device) {
-    //     result = -ENOMEM;
-    //     goto fail;
-    // }
     aesd_circular_buffer_init(&aesd_device.buffer);
     // mutex_init(&aesd_device.lock);
 
