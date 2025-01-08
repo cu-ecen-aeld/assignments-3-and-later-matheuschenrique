@@ -80,15 +80,13 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
         retval = count;
     }
 
-    if (copy_to_user(buf, entry->buffptr, retval)) {
+    if (copy_to_user(buf, entry->buffptr + offset_rtn, retval)) {
         retval = -EFAULT;
         goto out;
     }
-    retval = retval;
     *f_pos += retval;
     
 out:
-    kfree(entry);
     return retval;
 }
 
@@ -103,7 +101,6 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
     struct aesd_dev *dev = filp->private_data;
     char *kbuf = kmalloc(count, GFP_KERNEL);
     if (!kbuf) {
-        kfree(kbuf);
         goto out;
     }
     if (mutex_lock_interruptible(&dev->lock)) {
@@ -146,14 +143,15 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
         dev->working_entry.buffptr = NULL;
         dev->working_entry.size = 0;
     }
+    mutex_unlock(&dev->lock);
 
     *f_pos += count;
     retval = count;
 
-    mutex_unlock(&dev->lock);
-
 out:
-    // kfree(kbuf);
+    if (retval != couint) {
+        kfree(kbuf);
+    }
     return retval;
 }
 struct file_operations aesd_fops = {
