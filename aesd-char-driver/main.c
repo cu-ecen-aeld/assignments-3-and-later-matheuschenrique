@@ -149,7 +149,7 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
     retval = count;
 
 out:
-    if (retval != couint) {
+    if (retval != count) {
         kfree(kbuf);
     }
     return retval;
