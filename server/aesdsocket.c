@@ -15,6 +15,11 @@
 #include "queue.h"
 #include "time.h"
 
+#include <sys/ioctl.h>
+#include <fcntl.h>
+
+#include "../aesd-char-driver/aesd_ioctl.h"
+
 #define SOCKET_PORT "9000"
 #define BACKLOG 10
 #define MAX_DATA_SIZE 100
@@ -144,7 +149,7 @@ void* threadCallback(void *arg) {
 
     pthread_mutex_lock(&lock);
 
-    pFile = fopen(FILE_PATH, "a");
+    pFile = fopen(FILE_PATH, "r+");
     if (pFile == NULL) {
         perror("fopen");
         close(data->client_fd);
@@ -156,10 +161,19 @@ void* threadCallback(void *arg) {
             perror("recv");
             exit(EXIT_FAILURE);
         } else if (bytes_received > 0) {
-            write_buffer[bytes_received] = '\0';
+            write_buffer[bytes_received] = '\0'; 
+            struct aesd_seekto seekto;
+            if (sscanf(write_buffer, "AESDCHAR_IOCSEEKTO:%u,%u\n", &seekto.write_cmd, &seekto.write_cmd_offset) == 2){
+                if (ioctl(fileno(pFile), AESDCHAR_IOCSEEKTO, &seekto) < 0) {
+                    perror("ioctl");
+                    exit(EXIT_FAILURE);
+                }
+                break;
+            }
             fprintf(pFile, "%s", write_buffer);
             fflush(pFile);
             if(strchr(write_buffer, '\n')) {
+                fseek(pFile, 0, SEEK_SET);
                 break;
             }
         } else {
@@ -167,14 +181,7 @@ void* threadCallback(void *arg) {
         }
     }
     pthread_mutex_unlock(&lock);
-    fclose(pFile);
-
-    pFile = fopen(FILE_PATH, "rb");
-    if (pFile == NULL) {
-        perror("fopen");
-        exit(EXIT_FAILURE);
-    }
-
+    
     while(!feof(pFile)) {
         size_t bytes = fread(&read_buffer, sizeof(char), MAX_DATA_SIZE, pFile);
         bytes_sent = send(data->client_fd, (void*)read_buffer, bytes, 0);
