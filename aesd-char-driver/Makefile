@@ -19,9 +19,10 @@ else
 
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 PWD       := $(shell pwd)
+CFLAGS    ?= -O2
 
 modules:
-	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) CFLAGS="$(CFLAGS)" modules
 
 endif
 
