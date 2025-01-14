@@ -236,8 +236,8 @@ static long aesd_adjust_file_offset (struct file *filp, uint32_t write_cmd, uint
         retval = -EINVAL;
         goto out;
     }
-
-    for (int i = 0; i < write_cmd; i++) {
+    int i;
+    for (i = 0; i < write_cmd; i++) {
         offset += aesd_device.buffer.entry[i].size;
     }
 
